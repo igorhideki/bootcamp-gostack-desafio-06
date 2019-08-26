@@ -28,12 +28,9 @@ class User extends Component {
   };
 
   async componentDidMount() {
-    const { navigation } = this.props;
-    const user = navigation.getParam('user');
-
     this.setState({ loading: true });
 
-    const response = await api.get(`users/${user.login}/starred`);
+    const response = await this.fetchStars();
 
     this.setState({
       stars: response.data,
@@ -41,10 +38,16 @@ class User extends Component {
     });
   }
 
-  loadMore = async () => {
-    const { page, stars, finish } = this.state;
+  fetchStars = (page = 1) => {
     const { navigation } = this.props;
     const user = navigation.getParam('user');
+    const response = api.get(`users/${user.login}/starred?page=${page}`);
+
+    return response;
+  };
+
+  loadMore = async () => {
+    const { page, stars, finish } = this.state;
     const newPage = page + 1;
 
     if (finish || stars.length < 30) return;
@@ -54,9 +57,7 @@ class User extends Component {
       loading: true,
     });
 
-    const response = await api.get(
-      `users/${user.login}/starred?page=${newPage}`
-    );
+    const response = await this.fetchStars(newPage);
 
     if (!response.data.length) {
       this.setState({
@@ -69,6 +70,20 @@ class User extends Component {
         loading: false,
       });
     }
+  };
+
+  refreshList = async () => {
+    const page = 1;
+
+    this.setState({ loading: true });
+
+    const response = await this.fetchStars(page);
+
+    this.setState({
+      page,
+      stars: response.data,
+      loading: false,
+    });
   };
 
   render() {
@@ -91,6 +106,8 @@ class User extends Component {
             keyExtractor={star => String(star.id)}
             onEndReachedThreshold={0.2}
             onEndReached={this.loadMore}
+            onRefresh={this.refreshList}
+            refreshing={loading}
             renderItem={({ item }) => (
               <Starred>
                 <OwnerAvatar source={{ uri: item.owner.avatar_url }} />
