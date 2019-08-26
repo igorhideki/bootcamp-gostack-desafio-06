@@ -77,5 +77,5 @@ export const Author = styled.Text`
 `;
 
 export const Loading = styled.View`
-  margin-top: 20px;
+  margin: 20px 0;
 `;
